@@ -12,6 +12,11 @@ const app = express()
 const productRoutes = require ("./api/routes/product")
 const orderRoutes = require("./api/routes/orders")
 
+
+mongooseDb.set('strictQuery','false')
+mongooseDb.connect("mongodb://localhost:27017/NodeApi"
+)
+
 app.use(morgan('dev'))
 app.use(bodyParser.urlencoded({extended:false}))
 app.use(bodyParser.json())
