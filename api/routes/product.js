@@ -7,15 +7,41 @@ const Product = require("../models/product")
 const routes = express.Router()
 
 routes.get("/", (req,res,next)=>{
-    res.status(200).json({
-        message:"Handling GET request"
-    })
+    Product.find()
+     .select("name price  _id")
+     .then(result=>{
+        if(result){
+            const response = {
+                count: result.length,
+                products:result.map(curr=>{
+                    return {
+                        names: curr.name,
+                        price:curr.price,
+                        _id: curr._id,
+                        request:{
+                            type:"GET",
+                            url:`http://localhost:3000/product/${curr._id}`
+                        }
+                    }
+                })
+            }
+            res.status(200).json({response})
+        }else{
+            res.status(404).json({
+                message:"No product found"
+            })
+        }
+     })
+     .catch(err=>{
+        res.status(500).json({error:err})
+        console.log(err)
+     })
+    
 })
 
 routes.post("/", (req,res,next)=>{
     
     const products = new Product({
-        // _id:new mongoose.Type.ObjectId(),
         name:req.body.name,
         price:req.body.price
     })
@@ -23,8 +49,16 @@ routes.post("/", (req,res,next)=>{
      .then(result=>{
         // console.log(result)
         res.status(201).json({
-            message:"Handling POST request",
-            productCreated : result
+            message:"Created Product",
+            productCreated : {
+                name:result.name,
+                price:result.price,
+                _id:result._id,
+                request:{
+                    type:"GET",
+                    url:`http://localhost:3000/product/${result._id}`
+                }
+            }
         })
      })
      .catch(err=>{
@@ -35,13 +69,22 @@ routes.post("/", (req,res,next)=>{
 })
 
 
+
 routes.get("/:productId",(req,res,next)=>{
     const id = req.params.productId;
     Product.findById(id)
      .then(result=>{
-        // console.log("from data base", result)
-        if(result){
-            res.status(200).json(result)
+         if(result){
+            console.log("from data base", result)
+            res.status(200).json({
+                name:`Product name ${result.name}`,
+                price:`Product price ${result.price}`,
+                request:{
+                    type:"GET",
+                    url:`http://localhost:3000/product/`
+                }
+
+            })
         }else{
             res.status(404).json({
                 message:"No product found"
@@ -56,28 +99,41 @@ routes.get("/:productId",(req,res,next)=>{
 
 routes.patch("/:productId",(req,res,next)=>{
     const id = req.params.productId;
-    if(id === '1234'){
-        res.status(200).json({
-            message:"updated product"
+    const name = req.body.name
+    const price = req.body.price
+    Product.updateOne({_id:id},{name:name, price:price})
+     .then(result=>{
+        res.status(201).json({
+            message:"Product updated",
+            name:name,
+            price:price,
+            request:{
+                type:"GET",
+                url:`http://localhost:3000/product/${id}`
+            }
+
         })
-    }else{
-        res.status(200).json({
-            message:"failed to update a product"
-        })
-    }
+     })
+     .catch(err=>{
+        res.status(500).json({error:err})
+     })
 })
 
 routes.delete("/:productId",(req,res,next)=>{
     const id = req.params.productId;
-    if(id === '1234'){
+    Product.deleteOne({_id:id})
+     .then(result=>{
         res.status(200).json({
-            message:"deleted product"
+            message:"Product deleted",
+            request:{
+                type:"GET",
+                url:`http://localhost:3000/product/`
+            }
         })
-    }else{
-        res.status(200).json({
-            message:"failed to delete a product"
-        })
-    }
+     })
+     .catch(err=>{
+        res.status(500).json({error:err})
+     })
 })
 
 module.exports = routes
