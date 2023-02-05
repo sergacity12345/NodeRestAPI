@@ -7,6 +7,7 @@ const Order = require("../models/orders")
 router.get("/",(req,res,next)=>{
     Order.find()
      .select("product quantity _id")
+     .populate('product','name price')
      .then(result=>{
         res.status(200).json({
             count:result.length,
@@ -39,34 +40,28 @@ router.post("/",(req,res,next)=>{
                 quantity : req.body.quantity,
                 product: req.body.productId
             })
-            orders.save()
-             .then(result=>{
-                res.status(201).json({
-                    message:'order created',
-                    order:{
-                        productId: result.product,
-                        productQTY: result.quantity,
-                        orderId:result._id
-                    },
-                    reuest:{
-                        type:"GET",
-                        url:"http://localhost:3000/order/" + result._id
-                    }
-                })
-             })
-              .catch(err=>{
-                res.status(500).json({
-                    error:err
-                })
-              })
+            return orders.save()
         }
      })
-     .catch(err=>{
-        res.status(500).json({
-            message:"No product",
-            error:err
+     .then(result=>{
+        res.status(201).json({
+            message:'order created',
+            order:{
+                productId: result.product,
+                productQTY: result.quantity,
+                orderId:result._id
+            },
+            request:{
+                type:"GET",
+                url:"http://localhost:3000/order/" + result._id
+            }
         })
      })
+      .catch(err=>{
+        res.status(500).json({
+            error:err
+        })
+      })
     
 })
 
@@ -74,6 +69,7 @@ router.get("/:orderId",(req,res,next)=>{
     const id = req.params.orderId;
     console.log(id)
     Order.findById(id)
+     .populate('product','name price')
      .then(result=>{
         if(!result){
             return res.status(404).json({
@@ -101,10 +97,13 @@ router.delete("/:orderId",(req,res,next)=>{
     const id = req.params.orderId;
     Order.remove({_id:id})
      .then(result=>{
-       
         res.status(200).json({
             message:"Order deleted",
-            order: result
+            order: result,
+            request:{
+                type:'GET',
+                url:"http://localhost:3000/order"
+            }
         })
      })
      .catch(err=>{
