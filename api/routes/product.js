@@ -17,11 +17,23 @@ const storage = multer.diskStorage({
     }
 })
 
-const upload = multer({storage:storage})
+const fileFilter = (req, file,cb)=>{
+    if(file.mimetype === 'image/jpeg' || file.mimetype === 'image/png'){
+        cb(null,true)
+    }else{
+        cb(null, false)
+    }
+}
+
+const upload = multer
+    ({storage:storage,        
+    fileFilter:fileFilter , 
+    limits:{fileSize: 1024 * 1024 * 5 
+}})
 
 routes.get("/", (req,res,next)=>{
     Product.find()
-     .select("name price  _id")
+     .select("name price  _id productImage")
      .then(result=>{
         if(result){
             const response = {
@@ -29,6 +41,7 @@ routes.get("/", (req,res,next)=>{
                 products:result.map(curr=>{
                     return {
                         names: curr.name,
+                        productImage:curr.productImage,
                         price:curr.price,
                         _id: curr._id,
                         request:{
@@ -57,7 +70,8 @@ routes.post("/", upload.single('product-image'),
     console.log(req.file)
     const products = new Product({
         name:req.body.name,
-        price:req.body.price
+        price:req.body.price,
+        productImage:req.file.path
     })
     products.save()
      .then(result=>{
