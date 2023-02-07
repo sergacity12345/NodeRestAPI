@@ -9,6 +9,8 @@ const morgan = require('morgan')
 
 const app = express()
 
+const userRoute = require('./api/routes/user')
+
 const productRoutes = require ("./api/routes/product")
 const orderRoutes = require("./api/routes/orders")
 
@@ -34,6 +36,7 @@ app.use((req,res,next)=>{
 
 app.use("/product", productRoutes)
 app.use("/order",orderRoutes)
+app.use('/user',userRoute)
 
 //ERROR HANDLING
 app.use((req,res,next)=>{
