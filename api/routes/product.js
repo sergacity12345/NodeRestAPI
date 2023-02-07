@@ -6,6 +6,19 @@ const Product = require("../models/product")
 
 const routes = express.Router()
 
+
+const multer = require('multer')
+const storage = multer.diskStorage({
+    destination: function(req,file, cb){
+        cb(null,'uploads/')
+    },
+    filename:function(req, file, cb){
+        cb(null,  file.originalname  )
+    }
+})
+
+const upload = multer({storage:storage})
+
 routes.get("/", (req,res,next)=>{
     Product.find()
      .select("name price  _id")
@@ -39,8 +52,9 @@ routes.get("/", (req,res,next)=>{
     
 })
 
-routes.post("/", (req,res,next)=>{
-    
+routes.post("/", upload.single('product-image'),
+ (req,res, next)=>{
+    console.log(req.file)
     const products = new Product({
         name:req.body.name,
         price:req.body.price
